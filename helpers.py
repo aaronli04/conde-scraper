@@ -22,8 +22,9 @@ def extract_primary_hotel_link(caption):
 # Get hotel details from Conde hotel link
 def scrape_hotel_details(hotel_link):
     response = requests.get(hotel_link)
-    external_link = None
+    external_link = ''
     paragraphs = []
+    address = ''
 
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -33,6 +34,17 @@ def scrape_hotel_details(hotel_link):
         if address_wrapper:
             address_details = address_wrapper.find('div', class_='VenueAddressDetails')
             if address_details:
+                # Extract venue address
+                address_element = address_details.find('div', class_='VenueAddress')
+                country_details = address_wrapper.find('div', {'data-testid': 'VenueAddressCountry'})
+                if address_element:
+                    address = address_element.text.strip()
+                    if country_details:
+                        country = country_details.text.strip()
+                        address = address + ", " + country
+                else:
+                    print("Address element not found.")
+
                 # Extracting external link
                 external_link_tag = address_details.find('a', class_='external-link')
                 
@@ -55,7 +67,7 @@ def scrape_hotel_details(hotel_link):
     else:
         print(f"Error: Unable to fetch the hotel page. Status code: {response.status_code}")
 
-    return external_link, paragraphs
+    return external_link, paragraphs, address
 
 # Fuzzy match award name to known award categories
 def categorize_awards(award_name):

@@ -7,11 +7,11 @@ def scrape_conde():
     base_url = 'https://www.cntraveler.com'
 
     # Conde link to scrape
-    url = 'https://www.cntraveler.com/gallery/best-hotels-in-los-angeles'
+    url = 'https://www.cntraveler.com/gallery/best-hotels-in-buenos-aires'
 
     response = requests.get(url)
 
-    data = {'Hotel Name': [], 'Awards': [], 'Price Point': [], 'Description (List)': [], 'Description (Hotel)': [], 'Hotel Website URL': []}
+    data = {'Hotel Name': [], 'Awards': [], 'Price Point': [], 'Description (List)': [], 'Description (Hotel)': [], 'Address': [],'Conde Hotel URL': [], 'Hotel Website URL': []}
 
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')    
@@ -25,7 +25,12 @@ def scrape_conde():
             data['Hotel Name'].append(hotel_name)
 
             # Extract the primary hotel link
-            primary_hotel_link = base_url + extract_primary_hotel_link(caption)
+            hotel_link = extract_primary_hotel_link(caption)
+            if (hotel_link):
+                primary_hotel_link = base_url + extract_primary_hotel_link(caption)
+            else:
+                primary_hotel_link = base_url
+            data['Conde Hotel URL'].append(primary_hotel_link)
 
             # Extract the detail element
             detail_element = caption.find('div', class_='GallerySlideCaptionDetail-hSFZKt bPsOid')
@@ -36,16 +41,18 @@ def scrape_conde():
                 awards_list, dollar_sign_count = extract_awards_list(detail_element)
                 data['Awards'].append(awards_list)
                 data['Price Point'].append(dollar_sign_count)
-                external_link, paragraphs = scrape_hotel_details(primary_hotel_link)
+                external_link, paragraphs, address = scrape_hotel_details(primary_hotel_link)
+                data['Address'].append(address)
                 data['Hotel Website URL'].append(external_link)
                 data['Description (Hotel)'].append('\n'.join(paragraphs))
 
             else:
                 print("Incomplete information: No detail element found.")
-                data['Awards'].append(None)
-                data['Price Point'].append(None)
-                data['Hotel Website URL'].append(None)
-                data['Description (Hotel)'].append(None)
+                data['Awards'].append('')
+                data['Price Point'].append('')
+                data['Hotel Website URL'].append('')
+                data['Address'].append('')
+                data['Description (Hotel)'].append('')
 
             # Extract other relevant information as needed
             description = extract_description(caption)
