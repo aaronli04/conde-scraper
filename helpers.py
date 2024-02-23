@@ -120,3 +120,55 @@ def extract_description(caption):
         return caption.find('div', class_='GallerySlideCaptionDekContainer-hLUdt gSWuis').find('p').text
     except AttributeError:
         return None
+
+# Get all hotel info needed
+def get_all_info(link):
+    base_link = 'https://www.cntraveler.com'
+
+    response = requests.get(link)
+    soup = extract_soup_from_response(response)
+
+    hotel_captions = soup.find_all(
+        'div', class_='GallerySlideFigCaption-dOeyTg jgkmHh')
+
+    results = []
+
+    name = ''
+    hotel_link = ''
+    awards_list = ''
+    dollar_sign_count = 0
+    external_link = ''
+    description_hotel = ''
+    address = ''
+    description_list = ''
+
+    for caption in hotel_captions:
+        # Extract the hotel name
+        name = extract_hotel_name(caption)
+
+        # Extract the primary hotel link
+        hotel_link = extract_primary_hotel_link(caption)
+        if (hotel_link):
+            primary_hotel_link = base_link + extract_primary_hotel_link(caption)
+        else:
+            primary_hotel_link = base_link
+        hotel_link = primary_hotel_link
+
+        # Extract the detail element
+        detail_element = caption.find(
+            'div', class_='GallerySlideCaptionDetail-hSFZKt bPsOid')
+
+        # Check if detail_element is not None before proceeding
+        if detail_element:
+            # Extract the awards list and count of dollar signs
+            awards_list, dollar_sign_count = extract_awards_list(
+                detail_element)
+            external_link, description_hotel, address = scrape_hotel_details(
+                primary_hotel_link)
+
+        # Extract other relevant information as needed
+        description_list = extract_description(caption)
+
+        results.append([name, awards_list, dollar_sign_count, description_list, description_hotel, address, hotel_link, external_link])
+
+    return results
